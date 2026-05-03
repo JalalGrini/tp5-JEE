@@ -1,0 +1,21 @@
+# Ignore everything
+*
+
+# Whitelist ONLY src/main and the report
+!src/
+!src/main/
+!src/main/**
+!Rapport_TP5.tex
+!.gitignore
+
+# Explicitly ignore libraries and binaries
+src/main/webapp/WEB-INF/lib/
+*.jar
+*.class
+build/
+bin/
+target/
+.metadata/
+.settings/
+.project
+.classpath

@@ -1,0 +1,395 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{margin=2.5cm, top=3cm}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{listings}
+\usepackage{tikz}
+\usepackage[most]{tcolorbox}
+\usepackage{inconsolata}
+\usepackage{textcomp}
+
+% --- Palette de Couleurs ---
+\definecolor{MainBlue}{RGB}{20, 60, 110}
+\definecolor{LightBlue}{RGB}{235, 245, 255}
+\definecolor{TerminalBlack}{RGB}{40, 44, 52}
+\definecolor{ShadowGray}{RGB}{210, 210, 210}
+\definecolor{CodeKeyword}{RGB}{181, 137, 0}
+\definecolor{CodeString}{RGB}{42, 161, 152}
+\definecolor{CodeComment}{RGB}{133, 153, 0}
+
+% --- Section Title Styling ---
+\titleformat{\section}
+{\color{MainBlue}\normalfont\Large\bfseries}
+{}{0em}
+{%
+  \begin{tikzpicture}[baseline=(char.base)]
+    \fill[MainBlue] (0,-0.1) rectangle (0.3,0.6);
+    \node (char) at (0.5,0) {};
+  \end{tikzpicture}\hspace{0pt}%
+}
+
+% ---- Java/JSP listing style ----
+\lstdefinestyle{pystyle}{
+    language=Java,
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{CodeKeyword}\bfseries,
+    stringstyle=\color{CodeString},
+    commentstyle=\color{CodeComment}\itshape,
+    numberstyle=\ttfamily\tiny\color{gray!60},
+    columns=fixed,
+    keepspaces=true,
+    upquote=true,
+    showstringspaces=false,
+    numbers=left,
+    numbersep=10pt,
+    tabsize=4,
+    breaklines=true,
+    breakatwhitespace=false,
+    breakindent=2em,
+    postbreak=\mbox{\textcolor{gray}{\ensuremath{\hookrightarrow}}\space},
+}
+
+% ---- Code Box ----
+\newtcblisting{codeholder}[1]{
+    listing only,
+    listing style=pystyle,
+    enhanced,
+    breakable,
+    colback=white,
+    colframe=TerminalBlack,
+    boxrule=0.7pt,
+    arc=4pt,
+    left=2pt,
+    right=4pt,
+    top=4pt,
+    bottom=4pt,
+    boxsep=4pt,
+    title={%
+        \textcolor{red!80}{$\bullet$}
+        \textcolor{yellow!80}{$\bullet$}
+        \textcolor{green!80}{$\bullet$}
+        \hspace{0.4cm}
+        {\ttfamily\footnotesize #1}
+    },
+    fonttitle=\bfseries\color{white},
+    colbacktitle=TerminalBlack,
+    attach boxed title to top left={yshift=-3mm, xshift=6mm},
+    boxed title style={size=small, sharp corners, arc=2pt},
+    shadow={1mm}{-1mm}{0mm}{ShadowGray},
+}
+
+\begin{document}
+
+\begin{titlepage}
+    \begin{tikzpicture}[remember picture, overlay]
+        \fill[MainBlue] (current page.north west) rectangle ([xshift=1.5cm]current page.south west);
+        \node[anchor=north west, fill=LightBlue, minimum width=15cm, minimum height=4cm, inner sep=1cm] at ([xshift=2cm, yshift=-4cm]current page.north west) {
+            \begin{minipage}{14cm}
+                {\Huge \bfseries \color{MainBlue} RAPPORT DE TP5} \\[0.4cm]
+                {\large \color{black!70} Développement d'une Application Java EE}
+            \end{minipage}
+        };
+    \end{tikzpicture}
+    \vfill
+    \begin{flushright}
+    \begin{tcolorbox}[width=8.5cm, colframe=MainBlue, colback=white, boxrule=2pt, arc=10pt, inner sep=15pt, shadow={3mm}{-3mm}{0mm}{ShadowGray}]
+        {\large \textbf{IDENTITÉ}} \vspace{5pt} \hrule \vspace{10pt}
+        \begin{tabular}{ll}
+            \textbf{Nom :} & Jalal Grini \\
+            \textbf{Classe :} & TDIA2 \\
+            \textbf{École :} & ENSAH \\
+            \textbf{Enseignant :} & M.Cherradi \\
+            \textbf{Sujet :} & Application Web CRUD \\ 
+                            & MVC2 avec Hibernate
+        \end{tabular}
+    \end{tcolorbox}
+    \end{flushright}
+    \vspace{2cm}
+\end{titlepage}
+
+\newpage
+\tableofcontents
+\newpage
+
+\section{Introduction et Architecture}
+Ce projet a pour objectif de développer une application web de gestion de produits. L'application s'appuie sur une architecture robuste séparant clairement les responsabilités :
+\begin{itemize}
+    \item \textbf{Hibernate ORM} : Gère le mapping objet-relationnel avec MySQL.
+    \item \textbf{La Logique Métier (DAO et Services)} : Gère les règles d'application et l'accès à la base de données.
+    \item \textbf{Les Vues (JSP)} : Se contentent d'afficher les données préparées par les contrôleurs.
+\end{itemize}
+
+\section{Étape 1 : Configuration (Hibernate)}
+\begin{codeholder}{src/main/resources/hibernate.cfg.xml}
+<hibernate-configuration>
+    <session-factory>
+        <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/tpnewmvc2</property>
+        <property name="hibernate.connection.username">root</property>
+        <property name="hibernate.connection.password">Jalal.1234</property>
+        <property name="hibernate.hbm2ddl.auto">update</property>
+        <mapping class="DAO.Produit"/>
+        <mapping class="model.User"/>
+    </session-factory>
+</hibernate-configuration>
+\end{codeholder}
+
+\begin{codeholder}{src/main/java/util/HibernateUtil.java}
+public class HibernateUtil {
+    private static SessionFactory sessionFactory = null;
+    public static SessionFactory getSessionFactory() {
+        if (sessionFactory == null) {
+            sessionFactory = new Configuration().configure("hibernate.cfg.xml").buildSessionFactory();
+        }
+        return sessionFactory;
+    }
+}
+\end{codeholder}
+
+\section{Étape 2 : Les Modèles de Données}
+\begin{codeholder}{src/main/java/model/User.java}
+@Entity @Table(name = "users")
+public class User {
+    @Id private String login;
+    private String password;
+    private String role;
+    
+    public User(String login, String password, String role) {
+        this.login = login; this.password = password; this.role = role;
+    }
+}
+\end{codeholder}
+
+\begin{codeholder}{src/main/java/DAO/Produit.java}
+@Entity @Table(name = "produits")
+public class Produit {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long idProduit;
+    private String nom;
+    private String description;
+    private Double prix;
+}
+\end{codeholder}
+
+\section{Étape 3 : Accès aux Données (DAO)}
+\begin{codeholder}{src/main/java/DAO/ProduitDAO.java}
+public interface ProduitDAO {
+    public void addProduit(Produit p);
+    public void deleteProduit(Long id);
+    public void updateProduit(Produit p);
+    public List<Produit> getAllProduits();
+    public Produit getProduitById(Long id);
+}
+\end{codeholder}
+
+\begin{codeholder}{src/main/java/DAO/ProduitImpl.java}
+public class ProduitImpl implements ProduitDAO {
+    @Override
+    public void addProduit(Produit p) {
+        Session s = HibernateUtil.getSessionFactory().openSession();
+        Transaction tx = s.beginTransaction();
+        s.save(p); tx.commit(); s.close();
+    }
+    @Override
+    public void deleteProduit(Long id) {
+        Session s = HibernateUtil.getSessionFactory().openSession();
+        Transaction tx = s.beginTransaction();
+        Produit p = s.get(Produit.class, id);
+        if (p != null) s.delete(p);
+        tx.commit(); s.close();
+    }
+    @Override
+    public List<Produit> getAllProduits() {
+        Session s = HibernateUtil.getSessionFactory().openSession();
+        List<Produit> list = s.createQuery("from Produit", Produit.class).list();
+        s.close(); return list;
+    }
+    // Reste de l'implémentation (update, getById)...
+}
+\end{codeholder}
+
+\begin{codeholder}{src/main/java/DAO/UserDAO.java}
+public class UserDAO {
+    public User findByLoginAndPassword(String login, String password) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        User u = session.createQuery("from User where login = :l and password = :p", User.class)
+                .setParameter("l", login).setParameter("p", password).uniqueResult();
+        session.close(); return u;
+    }
+}
+\end{codeholder}
+
+\section{Étape 4 : Couche Métier (Services)}
+\begin{codeholder}{src/main/java/Services/ProduitMetier.java}
+public interface ProduitMetier {
+    public void addProduit(Produit p);
+    public void deleteProduit(Long id);
+    public List<Produit> getAllProduits();
+    public Produit getProduitById(Long id);
+}
+\end{codeholder}
+
+\begin{codeholder}{src/main/java/Services/ProduitMetierImpl.java}
+public class ProduitMetierImpl implements ProduitMetier {
+    private static ProduitMetierImpl instance;
+    private ProduitDAO dao = new ProduitImpl();
+    public static ProduitMetierImpl getInstance() {
+        if (instance == null) instance = new ProduitMetierImpl();
+        return instance;
+    }
+    @Override
+    public void addProduit(Produit p) { dao.addProduit(p); }
+    @Override
+    public List<Produit> getAllProduits() { return dao.getAllProduits(); }
+}
+\end{codeholder}
+
+\section{Étape 5 : Sécurité (Filtre)}
+\begin{codeholder}{src/main/java/filters/SessionFilter.java}
+@WebFilter(urlPatterns = { "/listProduits", "/addProduit", "/deleteProduit", "/editProduit", "/updateProduit" })
+public class SessionFilter extends HttpFilter {
+    public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws ... {
+        HttpServletRequest request = (HttpServletRequest) req;
+        HttpSession session = request.getSession(false);
+        if (session != null && session.getAttribute("user") != null) {
+            chain.doFilter(req, resp);
+        } else {
+            ((HttpServletResponse)resp).sendRedirect(request.getContextPath() + "/login");
+        }
+    }
+}
+\end{codeholder}
+
+\section{Étape 6 : Les Contrôleurs (Servlets)}
+\begin{codeholder}{src/main/java/web/LoginServlet.java}
+@WebServlet("/login")
+public class LoginServlet extends HttpServlet {
+    private UserDAO dao = new UserDAO();
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ... {
+        User u = dao.findByLoginAndPassword(request.getParameter("login"), request.getParameter("password"));
+        if (u != null) {
+            request.getSession().setAttribute("user", u);
+            response.sendRedirect("listProduits");
+        } else {
+            request.setAttribute("erreur", "Invalide");
+            request.getRequestDispatcher("login.jsp").forward(request, response);
+        }
+    }
+}
+\end{codeholder}
+
+\begin{codeholder}{src/main/java/web/ListProduitsServlet.java}
+@WebServlet("/listProduits")
+public class ListProduitsServlet extends HttpServlet {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ... {
+        request.setAttribute("listeProduits", ProduitMetierImpl.getInstance().getAllProduits());
+        User u = (User) request.getSession().getAttribute("user");
+        String page = ("admin".equals(u.getRole())) ? "index.jsp" : "list.jsp";
+        request.getRequestDispatcher(page).forward(request, response);
+    }
+}
+\end{codeholder}
+
+\begin{codeholder}{src/main/java/web/AddProduitServlet.java}
+@WebServlet("/addProduit")
+public class AddProduitServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ... {
+        ProduitMetierImpl.getInstance().addProduit(new Produit(
+            req.getParameter("nom"), req.getParameter("description"), 
+            Double.parseDouble(req.getParameter("prix"))
+        ));
+        resp.sendRedirect("listProduits");
+    }
+}
+\end{codeholder}
+
+\begin{codeholder}{src/main/java/web/EditProduitServlet.java}
+@WebServlet("/editProduit")
+public class EditProduitServlet extends HttpServlet {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ... {
+        Long id = Long.parseLong(req.getParameter("id"));
+        req.setAttribute("produitEdit", ProduitMetierImpl.getInstance().getProduitById(id));
+        req.setAttribute("listeProduits", ProduitMetierImpl.getInstance().getAllProduits());
+        req.getRequestDispatcher("index.jsp").forward(req, resp);
+    }
+}
+\end{codeholder}
+
+\begin{codeholder}{src/main/java/web/UpdateProduitServlet.java}
+@WebServlet("/updateProduit")
+public class UpdateProduitServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ... {
+        Produit p = new Produit(req.getParameter("nom"), req.getParameter("description"), Double.parseDouble(req.getParameter("prix")));
+        p.setIdProduit(Long.parseLong(req.getParameter("idProduit")));
+        ProduitMetierImpl.getInstance().updateProduit(p);
+        resp.sendRedirect("listProduits");
+    }
+}
+\end{codeholder}
+
+\begin{codeholder}{src/main/java/web/DeleteProduitServlet.java}
+@WebServlet("/deleteProduit")
+public class DeleteProduitServlet extends HttpServlet {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ... {
+        ProduitMetierImpl.getInstance().deleteProduit(Long.parseLong(req.getParameter("id")));
+        resp.sendRedirect("listProduits");
+    }
+}
+\end{codeholder}
+
+\begin{codeholder}{src/main/java/web/LogoutServlet.java}
+@WebServlet("/logout")
+public class LogoutServlet extends HttpServlet {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ... {
+        HttpSession session = req.getSession(false);
+        if (session != null) session.invalidate();
+        resp.sendRedirect("login");
+    }
+}
+\end{codeholder}
+
+\section{Étape 7 : Présentation (Vues JSP)}
+\begin{codeholder}{src/main/webapp/login.jsp}
+<form action="login" method="post">
+    Login: <input type="text" name="login" required /><br/>
+    Password: <input type="password" name="password" required /><br/>
+    <input type="submit" value="Se connecter" />
+</form>
+\end{codeholder}
+
+\begin{codeholder}{src/main/webapp/index.jsp}
+<form action="${produitEdit != null ? 'updateProduit' : 'addProduit'}" method="post">
+    <input type="hidden" name="idProduit" value="${produitEdit.idProduit}" />
+    Nom: <input type="text" name="nom" value="${produitEdit.nom}" required />
+    Prix: <input type="text" name="prix" value="${produitEdit.prix}" required />
+    <input type="submit" value="${produitEdit != null ? 'Modifier' : 'Ajouter'}" />
+</form>
+<table border="1">
+    <c:forEach var="p" items="${listeProduits}">
+        <tr>
+            <td>${p.idProduit}</td><td>${p.nom}</td><td>${p.prix}</td>
+            <td><a href="editProduit?id=${p.idProduit}">Edit</a> | <a href="deleteProduit?id=${p.idProduit}">Del</a></td>
+        </tr>
+    </c:forEach>
+</table>
+\end{codeholder}
+
+\begin{codeholder}{src/main/webapp/list.jsp}
+<table border="1">
+    <tr><th>ID</th><th>Nom</th><th>Prix</th></tr>
+    <c:forEach var="p" items="${listeProduits}">
+        <tr><td>${p.idProduit}</td><td>${p.nom}</td><td>${p.prix}</td></tr>
+    </c:forEach>
+</table>
+\end{codeholder}
+
+\begin{codeholder}{src/main/webapp/error.jsp}
+<h2>Erreur</h2>
+<p style="color:red;"><%= exception.getMessage() %></p>
+<a href="listProduits">Retour</a>
+\end{codeholder}
+
+\end{document}
